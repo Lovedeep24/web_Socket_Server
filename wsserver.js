@@ -68,4 +68,3 @@ wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ info: 'Connected to WebSocket server' }));
 });
 
-console.log('✅ WebSocket server running on ws://localhost:3001');
