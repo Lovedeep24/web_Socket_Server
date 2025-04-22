@@ -1,6 +1,7 @@
 {
   "name": "websocket-server",
   "version": "1.0.0",
+   "type": "module",
   "main": "wsserver.js", 
   "scripts": {
     "start": "node wsserver.js"
