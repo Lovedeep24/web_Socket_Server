@@ -7,28 +7,30 @@ dotenv.config();
 
 const wss = new WebSocketServer({ port: 3001 });
 
-const chatHistories = {};
+const chatHistories = {};  // Use an object to store chat histories by user/session
 
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     try {
-      const {question } = JSON.parse(message);
+      const { question, chatId } = JSON.parse(message);  // Expecting a `chatId` from client
 
-      if ( !question) {
+      if (!question) {
         ws.send(JSON.stringify({ error: 'Missing question' }));
         return;
       }
 
-      if (!chatHistories) {
-        chatHistories = [
+      // Ensure chat history exists for the current chat session
+      if (!chatHistories[chatId]) {
+        chatHistories[chatId] = [
           {
             role: 'system',
-            content: `You are an AI tutor participating in an educational discussion. Always answer in a compact paragraph with no line breaks, no bullet points, and no numbered lists. Do not format responses with 1., 2.,  \n1 or anything like \n. Write naturally, using complete sentences. Also if chat is asked away from the educational discussion, you should say "I am not sure about that, but I can help you with educational questions."`,
+            content: `You are an AI tutor participating in an educational discussion. Always answer in a compact paragraph with no line breaks, no bullet points, and no numbered lists. Do not format responses with 1., 2., \n1 or anything like \n. Write naturally, using complete sentences. Also, if the chat is away from the educational discussion, you should say "I am not sure about that, but I can help you with educational questions."`,
           },
         ];
       }
 
-      chatHistories.push({
+      // Add the user question to the chat history
+      chatHistories[chatId].push({
         role: 'user',
         content: question,
       });
@@ -39,8 +41,8 @@ wss.on('connection', (ws) => {
         'https://api.mistral.ai/v1/chat/completions',
         {
           model: 'mistral-tiny',
-          messages: chatHistories,
-          stream: false, // If Mistral supports stream: true, switch this later
+          messages: chatHistories[chatId],  // Use the specific chat history
+          stream: false,  // If Mistral supports stream: true, switch this later
         },
         {
           headers: {
@@ -52,12 +54,13 @@ wss.on('connection', (ws) => {
 
       const botReply = response.data.choices[0].message.content;
 
-      chatHistories.push({
+      // Add the AI response to the chat history
+      chatHistories[chatId].push({
         role: 'assistant',
         content: botReply,
       });
 
-      // Send response back to the frontend
+      // Send the bot's reply back to the client
       ws.send(JSON.stringify({ answer: botReply }));
     } catch (error) {
       console.error('Error:', error);
@@ -68,3 +71,4 @@ wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ info: 'Connected to WebSocket server' }));
 });
 
+console.log('✅ WebSocket server running on ws://localhost:3001');
