@@ -1,12 +1,13 @@
-import { WebSocketServer } from 'ws';
-import axios from 'axios';
-import dotenv from 'dotenv';
+const { WebSocketServer } = require('ws');
+const axios = require('axios');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
 const wss = new WebSocketServer({ port: 3001 });
 
 wss.on('connection', (ws) => {
+  // Each connection gets its own chat history
   const chatHistory = [
     {
       role: 'system',
@@ -62,4 +63,4 @@ wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ info: 'Connected to WebSocket server' }));
 });
 
-console.log(' WebSocket server running on ws://localhost:3001');
+console.log('✅ WebSocket server running on ws://localhost:3001');
